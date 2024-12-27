@@ -1,0 +1,44 @@
+# File atau folder Python yang tidak relevan
+__pycache__/
+*.py[cod]
+*.pyo
+
+# File log
+*.log
+
+# Virtual environment
+venv/
+env/
+myenv/
+
+# File konfigurasi atau file rahasia
+*.env
+*.ini
+*.cfg
+
+# File database
+*.sqlite3
+
+# Cache dari library
+*.egg
+*.egg-info/
+dist/
+build/
+*.wheel
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Profil debug
+*.prof
+
+# File editor/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+
+# Sistem operasi
+.DS_Store
+Thumbs.db
