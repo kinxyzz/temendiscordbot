@@ -8,6 +8,7 @@ from discord import Embed # type: ignore
 from models import UserScore
 import requests # type: ignore
 from dotenv import load_dotenv # type: ignore
+from accountInfo import AccountInfo
 
 load_dotenv()
 
@@ -184,6 +185,54 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
     await bot.tree.sync()
     print("Bot is ready!")
+
+@bot.tree.command(name="badgecount", description="Fetch badge count and categorize by message")
+async def badge_count(interaction: discord.Interaction, message: str):
+   
+    ccid = AccountInfo.get_ccid(message)
+
+    if not ccid:
+        embed = Embed(title="Badge Count", color=discord.Color.red())
+        embed.add_field(name="IGN", value=message, inline=False)  
+        embed.add_field(name="Error", value="Account tidak ditemukan dalam halaman.", inline=False)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    badges_data = AccountInfo.get_badges(ccid)
+
+    if not badges_data:
+        embed = Embed(title="Badge Count {message}", color=discord.Color.red())
+        embed.add_field(name="IGN", value=message, inline=False)  
+        embed.add_field(name="Error", value="Gagal mengambil data badge.", inline=False)
+        await interaction.response.send_message(embed=embed)
+        return
+
+    categories = [
+        "Legendary","Epic Hero", "Battle", "Support",
+        "Exclusive", "Artix Entertainment"
+    ]
+    category_counts = {category: 0 for category in categories}
+
+    # Hitung jumlah badge per kategori
+    for badge in badges_data:
+        category = badge.get("sCategory", "Unknown")
+        if category in category_counts:
+            category_counts[category] += 1
+
+    # Hitung total badge
+    total_badge_count = len(badges_data)
+
+    # Membuat embed untuk menampilkan hasilnya
+    embed = Embed(title=f"Badge Count {message}", color=discord.Color.green())
+    embed.add_field(name="<:pepegimmle:1304354921902248007> Total Badges", value=f"{total_badge_count} badges ditemukan.", inline=False)
+    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1226361685317783625/1322530781045985280/PicsArt_12-28-02.42.28.png?ex=67713645&is=676fe4c5&hm=ec43d5a48382fd56327fa56e63264de3556bf6b9cc5697334fa5d3bc9ebc2790&")
+    # Menambahkan jumlah badge per kategori
+    for category, count in category_counts.items():
+        embed.add_field(name=category, value=f"{count} badges", inline=False)
+
+    # Kirim embed sebagai respons
+    await interaction.response.send_message(embed=embed)
+
 
 @bot.tree.command(name="rankhelper", description="Get Information About Helper Ranking")
 async def help_ranking(interaction: discord.Interaction):
