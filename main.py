@@ -339,7 +339,7 @@ async def check_inventory(interaction: discord.Interaction, ign: str, choose: ap
         icon = icon_map.get(choose.value.lower(), "<:misc:1322636897494761563")
 
         valid_items = [
-            f"{icon} {item['strName']} {('<:acs:1322635091230462005>' if item['bCoins'] else '')} {item['intCount']} {('<:legend:1322635134352097361>' if item['bUpgrade'] else '')}"
+            f"{icon} {item['strName']} {item['intCount'] if choose.value.lower() in ['item', 'quest item', 'resource'] else ''} {('<:acs:1322635091230462005>' if item['bCoins'] else '')} {('<:legend:1322635134352097361>' if item['bUpgrade'] else '')}"
             for item in filtered_items if item['strName']
         ]
 
