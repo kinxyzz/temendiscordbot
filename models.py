@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP # type: ignore
 from database import Base # type: ignore
 
 class UserScore(Base):
-    __tablename__ = 'UserScore'  # Nama tabel dalam database
+    __tablename__ = 'UserScore'
 
     # Kolom-kolom dalam tabel
     id = Column(Text, primary_key=True)

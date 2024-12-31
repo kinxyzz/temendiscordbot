@@ -1,13 +1,14 @@
 import requests
 import re
+from dotenv import load_dotenv # type: ignore
+import os
+
+load_dotenv()
 
 class AccountInfo:
     @staticmethod
     def get_ccid(message: str) -> str:
-        """
-        Mengambil ccid dari halaman web berdasarkan message yang diberikan.
-        """
-        base_url = "https://account.aq.com/CharPage"
+        base_url = os.environ.get("charpageurl")
         query_url = f"{base_url}?id={message.replace(' ', '+')}"
 
         try:
@@ -24,10 +25,7 @@ class AccountInfo:
 
     @staticmethod
     def get_badges(ccid: str):
-        """
-        Mengambil data badge berdasarkan ccid.
-        """
-        badges_url = f"https://account.aq.com/CharPage/Badges?ccid={ccid}"
+        badges_url = f"{os.environ.get('charpageurl')}/Badges?ccid={ccid}"
         
         try:
             response = requests.get(badges_url)
