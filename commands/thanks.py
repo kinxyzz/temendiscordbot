@@ -2,7 +2,9 @@ from discord import app_commands, Interaction
 from discord.ui import  Modal, TextInput
 import discord
 import re
-from database import session, Base,engine
+from sqlalchemy.orm import Session
+from database import engine
+from sqlalchemy.dialects.postgresql import insert
 from models import UserScore
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -18,26 +20,35 @@ async def thanks(interaction: Interaction, helpers: str):
 
     if interaction.channel.id in created_channels:
         print(helpers)
+        # Format mention helper untuk embed
         helper_mentions = helpers.replace(',', '\n')
+        
+        # Membuat embed untuk Discord
         embed = discord.Embed(
             title="Thanks",
             description=f"Request helper: {interaction.user.mention}\nHelper list:\n{helper_mentions}",
             color=discord.Color.green()
         )
+        
+        # Ekstrak user IDs dari helpers
         user_ids = [uid.strip("<@>") for uid in re.findall(r"<@\d+>", helpers)]
         print(user_ids)
 
         try:
-            for uid in user_ids:
-                user_score = session.query(UserScore).filter_by(userId=str(uid)).first()
-                if user_score:
-                    user_score.score += 10
-                else:
-                    new_score = UserScore(id=str(uid), userId=str(uid), score=10)
-                    session.add(new_score)
-            session.commit()
+            data = [{"id": uid, "userId": uid, "score": 10} for uid in user_ids]
+            
+            with Session(engine) as session:
+                stmt = insert(UserScore).values(data)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["userId"],
+                    set_={"score": UserScore.score + 10}
+                )
+                session.execute(stmt)
+                session.commit()
+            
+            print("Scores updated successfully.")
+        
         except SQLAlchemyError as e:
-            session.rollback()
             print(f"Database error: {e}")
 
         log_channel = interaction.guild.get_channel(1324023927902830642)
