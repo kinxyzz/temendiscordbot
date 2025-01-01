@@ -6,11 +6,27 @@ from models import UserScore
 from discord.ui import View, Button
 from discord import app_commands, Interaction, Embed, Color,ButtonStyle
 
+async def award_points(user_ids: list[str]):
+    """Separate function to handle the database operations"""
+    try:
+        for uid in user_ids:
+            user_score = session.query(UserScore).filter_by(userId=str(uid)).first()
+            if user_score:
+                user_score.score += 10
+            else:
+                new_score = UserScore(id=str(uid), userId=str(uid), score=10)
+                session.add(new_score)
+        session.commit()
+        return True
+    except Exception as e:
+        print(f"Error awarding points: {e}")
+        return False
+
 class HelpRequestView(View):
     def __init__(
         self, requester: discord.Member, message: str, max_helpers: int = None
     ):
-        super().__init__(timeout=None)
+        super().__init__(timeout=120)
         self.requester = requester
         self.message = message
         self.max_helpers = max_helpers
@@ -117,11 +133,8 @@ class HelpRequestView(View):
             )
             return
 
-      
-
-        orang_baik_list = (
-            "\n".join([f"<@{uid}> +10 point" for uid in self.users_helping]) or ""
-        )
+        helper_ids = self.users_helping.copy()
+        orang_baik_list = "\n".join([f"<@{uid}>" for uid in helper_ids])
 
         final_content = (
             f"{self.requester.mention}\nTelah menyelesaikan:\n** `{self.message}`**\n"
@@ -130,19 +143,22 @@ class HelpRequestView(View):
         )
 
         self.disable_buttons()
+        
         try:
             await interaction.response.edit_message(content=final_content, view=None)
-            for uid in self.users_helping:
-                user_score = session.query(UserScore).filter_by(userId=str(uid)).first()
-                if user_score:
-                    user_score.score += 10
-                else:
-                    new_score = UserScore(id=str(uid), userId=str(uid), score=10)
-                    session.add(new_score)
-                
-                session.commit()
+            
+            # Award points in a separate step
+            success = await award_points(helper_ids)
+            
+            if success:
+                thanks_list = "\n".join([f"<@{uid}> +10 point" for uid in helper_ids])
+                await interaction.followup.send(
+                    f"Terimakasih telah membantu!\n{thanks_list}",
+                )
+            
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
+
 
     def disable_buttons(self):
         for item in self.children:
