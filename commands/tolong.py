@@ -117,15 +117,7 @@ class HelpRequestView(View):
             )
             return
 
-        for uid in self.users_helping:
-            user_score = session.query(UserScore).filter_by(userId=str(uid)).first()
-            if user_score:
-                user_score.score += 10
-            else:
-                new_score = UserScore(id=str(uid), userId=str(uid), score=10)
-                session.add(new_score)
-
-        session.commit()
+      
 
         orang_baik_list = (
             "\n".join([f"<@{uid}> +10 point" for uid in self.users_helping]) or ""
@@ -140,6 +132,15 @@ class HelpRequestView(View):
         self.disable_buttons()
         try:
             await interaction.response.edit_message(content=final_content, view=None)
+            for uid in self.users_helping:
+                user_score = session.query(UserScore).filter_by(userId=str(uid)).first()
+                if user_score:
+                    user_score.score += 10
+                else:
+                    new_score = UserScore(id=str(uid), userId=str(uid), score=10)
+                    session.add(new_score)
+                
+                session.commit()
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
 
