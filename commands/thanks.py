@@ -1,12 +1,15 @@
 from discord import app_commands, Interaction
 from discord.ui import  Modal, TextInput
 import discord
+import re
+from database import session, Base,engine
+from models import UserScore
+from sqlalchemy.exc import SQLAlchemyError
 
 created_channels = []
 
 @app_commands.command(name="thanks", description="Thank helpers and close the current channel.")
 async def thanks(interaction: Interaction, helpers: str):
-    """Thank helpers and close the current channel."""
     restricted_channel_id = 1323978359180361818
 
     if interaction.channel.id == restricted_channel_id:
@@ -21,14 +24,29 @@ async def thanks(interaction: Interaction, helpers: str):
             description=f"Request helper: {interaction.user.mention}\nHelper list:\n{helper_mentions}",
             color=discord.Color.green()
         )
+        user_ids = [uid.strip("<@>") for uid in re.findall(r"<@\d+>", helpers)]
+        print(user_ids)
+
+        try:
+            for uid in user_ids:
+                user_score = session.query(UserScore).filter_by(userId=str(uid)).first()
+                if user_score:
+                    user_score.score += 10
+                else:
+                    new_score = UserScore(id=str(uid), userId=str(uid), score=10)
+                    session.add(new_score)
+            session.commit()
+        except SQLAlchemyError as e:
+            session.rollback()
+            print(f"Database error: {e}")
 
         log_channel = interaction.guild.get_channel(1324023927902830642)
         if log_channel:
             await log_channel.send(embed=embed)
+        created_channels.remove(interaction.channel.id)
         await interaction.channel.delete(reason="Help request concluded.")
     else:
         await interaction.response.send_message("This command can only be used in a help request channel created from the form.", ephemeral=True)
-
 class HelpRequestForm(Modal):
     def __init__(self):
         super().__init__(title="Help Request Form")

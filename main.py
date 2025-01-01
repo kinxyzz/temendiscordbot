@@ -9,11 +9,8 @@ from commands.classes import class_info
 from commands.tolong import tolong
 from commands.badge import badge_count
 from commands.thanks import thanks, HelpRequestForm
-from discord.ui import View, Button, Modal, TextInput
 from commands.rankinghelper import help_ranking
 from models import UserScore
-
-
 
 load_dotenv()
 

@@ -2,7 +2,6 @@ import discord  # type: ignore
 from discord.ui import View  # type: ignore
 from database import session, Base, engine
 from models import UserScore
-from models import UserScore
 from discord.ui import View, Button
 from discord import app_commands, Interaction, Embed, Color,ButtonStyle
 
