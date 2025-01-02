@@ -8,7 +8,7 @@ class HelpRequestView(View):
     def __init__(
         self, requester: discord.Member, message: str, max_helpers: int = None
     ):
-        super().__init__(timeout=120)
+        super().__init__(timeout=None)
         self.requester = requester
         self.message = message
         self.max_helpers = max_helpers
