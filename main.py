@@ -81,7 +81,6 @@ async def on_interaction(interaction: discord.Interaction):
 @bot.command(name="checkrank")
 async def checkrank(interaction: discord.Interaction):
     try:
-        # Menggunakan context manager untuk sesi
         with Session() as session:
             top_users = (
                 session.query(UserScore)
