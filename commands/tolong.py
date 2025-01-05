@@ -118,16 +118,19 @@ class HelpRequestView(View):
         helper_ids = self.users_helping.copy()
         orang_baik_list = "\n".join([f"<@{uid}>" for uid in helper_ids])
 
-        final_content = (
-            f"{self.requester.mention}\nTelah menyelesaikan:\n** `{self.message}`**\n"
-            f"Bersama:\n{orang_baik_list}\n\n"
-            "Terimakasih Puh!\n✅ Done!"
+        embed = discord.Embed(
+            title="Bantuan Selesai ✅",
+            description=(
+                f"{self.requester.mention} telah menyelesaikan:\n"
+                f"**`{self.message}`**\n\n"
+                f"**Bersama:**\n{orang_baik_list}\n\n"
+                "Terima kasih, Puh! 🙏"
+            ),
+            color=discord.Color.green()
         )
+        embed.set_footer(text="Klik selesai untuk menutup.")
 
-        self.disable_buttons()
-        
-        try:
-            await interaction.response.edit_message(content=final_content, view=None)
+        await interaction.response.send_message(embed=embed)
             
           
             
