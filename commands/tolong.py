@@ -133,6 +133,8 @@ class HelpRequestView(View):
 
             embed.set_footer(text="Temen Assistant")
             
+        
+            await interaction.message.delete()  #Hapus pesan interaksi kin
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
 
