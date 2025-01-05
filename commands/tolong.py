@@ -118,24 +118,20 @@ class HelpRequestView(View):
         helper_ids = self.users_helping.copy()
         orang_baik_list = "\n".join([f"<@{uid}>" for uid in helper_ids])
 
-        final_content = (
-            f"{self.requester.mention}\nTelah menyelesaikan:\n** `{self.message}`**\n"
-            f"Bersama:\n{orang_baik_list}\n\n"
-            "Terimakasih Puh!\n✅ Done!"
+        embed = discord.Embed(
+            title="Bantuan Selesai ✅",
+            description=(
+                f"{self.requester.mention}\ntelah menyelesaikan:\n"
+                f"**`{self.message}`**\n\n"
+                f"**Bersama:**\n{orang_baik_list}\n\n"
+                "Terima kasih, Puh! 🙏"
+            ),
+            color=discord.Color.from_rgb(44, 47, 51)
         )
-
-        self.disable_buttons()
-        
         try:
-            await interaction.response.edit_message(content=final_content, view=None)
-            
-          
-            
-           
-            thanks_list = "\n".join([f"<@{uid}> +10 point" for uid in helper_ids])
-            await interaction.followup.send(
-                f"Terimakasih telah membantu!\n{thanks_list}",
-            )
+            await interaction.response.send_message(embed=embed)
+
+            embed.set_footer(text="Temen Assistant")
             
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
