@@ -12,13 +12,12 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
 
-# Engine dengan connection pooling
 engine = create_engine(
     DATABASE_URL,
-    pool_size=10,           # Maksimal 10 koneksi dalam pool
-    max_overflow=5,         # Koneksi tambahan jika pool penuh
-    pool_recycle=1800,      # Daur ulang koneksi idle setelah 30 menit
-    pool_pre_ping=True      # Cek kesehatan koneksi sebelum digunakan
+    pool_size=10,           
+    max_overflow=5,        
+    pool_recycle=1800,
+    pool_pre_ping=True
 )
 
 Base = declarative_base()

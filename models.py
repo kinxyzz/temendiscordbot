@@ -5,7 +5,6 @@ from database import Base # type: ignore
 class UserScore(Base):
     __tablename__ = 'UserScore'
 
-    # Kolom-kolom dalam tabel
     id = Column(Text, primary_key=True)
     userId = Column(Text, nullable=False, unique=True)
     score = Column(Integer, nullable=False)
