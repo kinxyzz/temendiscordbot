@@ -73,7 +73,6 @@ class HelpRequestView(View):
         updated_embed = self.update_message_embed()
 
         try:
-            # Perbarui pesan embed
             await interaction.response.edit_message(embed=updated_embed, view=self)
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
