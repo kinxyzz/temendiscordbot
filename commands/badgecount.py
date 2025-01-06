@@ -5,7 +5,7 @@ from service.accountInfo import AccountInfo
 @app_commands.command(
     name="badgecount", description="Fetch badge count and categorize by message"
 )
-async def badge_count(interaction: Interaction, message: str):
+async def badgecount(interaction: Interaction, message: str):
 
     ccid = AccountInfo.get_ccid(message)
 

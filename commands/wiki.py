@@ -37,7 +37,7 @@ def extract_embed_content(content):
         return ""
 
 @app_commands.command(name="wiki", description="Check AQW Wiki")
-async def check_wiki(interaction: Interaction, item: str):
+async def wiki(interaction: Interaction, item: str):
     try:
         wiki_results = AQWWikiScraper.get_list_search(item)
         

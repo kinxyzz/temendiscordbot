@@ -49,8 +49,8 @@ def load_class_data():
         return {}
     
 
-@app_commands.command(name="class", description="Get class information")
-async def class_info(interaction:Interaction, keyword: str):
+@app_commands.command(name="classes", description="Get class information")
+async def classes(interaction:Interaction, keyword: str):
     keyword = keyword.lower()
     class_data = load_class_data()
     matched_class = None

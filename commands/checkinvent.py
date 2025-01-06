@@ -78,7 +78,7 @@ choose_options = [
 @app_commands.command(name="checkinvent", description="Check inventory by IGN and type")
 @app_commands.describe(ign="Enter the IGN", choose="Choose the type")
 @app_commands.choices(choose=choose_options)
-async def check_inventory(interaction: Interaction, ign: str, choose: app_commands.Choice[str]):
+async def checkinvent(interaction: Interaction, ign: str, choose: app_commands.Choice[str]):
     ccid = AccountInfo.get_ccid(ign)
     if not ccid:
         embed = Embed(title="Error", color= Color.red())
