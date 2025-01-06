@@ -14,7 +14,13 @@ class HelpRequestView(View):
         self.max_helpers = max_helpers
         self.users_helping = []
 
-    def update_message_content(self):
+    def update_message_embed(self):
+        embed = discord.Embed(
+            title="Permintaan Bantuan",
+            description=f"{self.requester.mention} meminta bantuan untuk:\n**`{self.message}`**",
+            color=discord.Color.blue(),
+        )
+
         if self.max_helpers is not None:
             helper_list = [
                 (
@@ -32,11 +38,14 @@ class HelpRequestView(View):
                 f"{i + 1}. <@{uid}>" for i, uid in enumerate(self.users_helping)
             ]
             helper_count_text = "Sepuh yang bersedia:"
+
         helper_text = "\n".join(helper_list) or "Belum ada yang membantu."
-        return (
-            f"{self.requester.mention}\nMeminta bantuan untuk\n**`{self.message}`**\n\n"
-            f"{helper_count_text}\n{helper_text}"
-        )
+
+        embed.add_field(name=helper_count_text, value=helper_text, inline=False)
+        embed.set_footer(text="Mohon bantuannya!")
+        embed.set_author(name=self.requester.name, icon_url=self.requester.avatar.url)
+
+        return embed
 
     @discord.ui.button(
         label="Ikut", style=discord.ButtonStyle.primary, custom_id="help_button"
@@ -59,10 +68,13 @@ class HelpRequestView(View):
                 ephemeral=True,
             )
             return
+
         self.users_helping.append(user.id)
-        updated_content = self.update_message_content()
+        updated_embed = self.update_message_embed()
+
         try:
-            await interaction.response.edit_message(content=updated_content, view=self)
+            # Perbarui pesan embed
+            await interaction.response.edit_message(embed=updated_embed, view=self)
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
 
@@ -128,12 +140,11 @@ class HelpRequestView(View):
             ),
             color=discord.Color.from_rgb(44, 47, 51)
         )
+
         try:
-            embed.set_footer( text="Temen Assistant",  icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8ace2244d42&")
+            embed.set_footer( text="Temen Assistant",  icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8a")
             await interaction.response.send_message(embed=embed)
-            
-        
-            await interaction.message.delete()  #Hapus pesan interaksi kin
+            await interaction.message.delete()
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
 
@@ -150,13 +161,23 @@ async def tolong(interaction: Interaction, message: str, maxhelper: int = None):
             "Jumlah maksimum helper harus lebih dari 0.", ephemeral=True
         )
         return
+
     requester = interaction.user
-    help_request = f"{requester.mention}\nMeminta bantuan sepuh untuk\n**`{message}`**"
-    max_helper_text = f" \n`Butuh {maxhelper} orang`" if maxhelper else ""
+    embed = discord.Embed(
+        title="Permintaan Bantuan",
+        description=f"{requester.mention} meminta bantuan untuk:\n**`{message}`**",
+        color=discord.Color.blue(),
+    )
+
+    if maxhelper:
+        embed.add_field(name="Jumlah Maksimum Helper", value=f"{maxhelper} orang", inline=False)
+
+    embed.set_footer(text="Temen Assistant")
+    embed.set_author(name=requester.name, icon_url=requester.avatar.url)
+
     view = HelpRequestView(requester, message, maxhelper)
+
     try:
-        await interaction.response.send_message(
-            content=f"{help_request}\n\nMohon bantuannya!{max_helper_text}", view=view
-        )
+        await interaction.response.send_message(embed=embed, view=view)
     except discord.HTTPException as e:
         print(f"Failed to send message: {e}")
