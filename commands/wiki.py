@@ -8,7 +8,6 @@ import os
 load_dotenv()
 
 def extract_embed_content(content):
-    # Split content into lines
     lines = content.split('\n')
     
     # Define markers
