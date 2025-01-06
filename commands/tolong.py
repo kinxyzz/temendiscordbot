@@ -132,6 +132,8 @@ class HelpRequestView(View):
             embed.set_footer( text="Temen Assistant",  icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8ace2244d42&")
             await interaction.response.send_message(embed=embed)
             
+        
+            await interaction.message.delete()  #Hapus pesan interaksi kin
         except discord.HTTPException as e:
             print(f"Failed to update message: {e}")
 
