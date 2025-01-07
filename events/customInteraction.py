@@ -65,11 +65,6 @@ async def customInteraction(interaction: discord.Interaction):
 
 async def on_ready_event(bot : commands.Bot):
     try:
-        # CHANNEL_ID = 1188139654717902869  # Ganti dengan ID channel Anda
-        # MESSAGE = "Ini lagi tak buat, tunggu aja"
-        # channel = bot.get_channel(CHANNEL_ID)
-        # if channel:
-        #     await channel.send(MESSAGE)
         await bot.tree.sync()
     except Exception as e:
         print(f"Failed to sync commands: {e}")
