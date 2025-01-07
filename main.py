@@ -35,6 +35,11 @@ for file in commands_dir.glob("*.py"):
 async def on_interaction(interaction: discord.Interaction):
     await customInteraction(interaction)
 
+@bot.command()
+async def ping(ctx):
+    await ctx.send("Pong")
+
+
 @bot.event
 async def on_ready():
     await on_ready_event(bot)
