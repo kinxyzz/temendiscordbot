@@ -158,7 +158,6 @@ async def tolong(interaction: Interaction, message: str, maxhelper: int = None):
             print(time_difference)
 
             if time_difference < timedelta(hours=1):
-                # Hitung sisa waktu dalam menit
                 remaining_time = timedelta(hours=1) - time_difference
                 remaining_minutes = int(remaining_time.total_seconds() // 60)
                 await interaction.response.send_message(

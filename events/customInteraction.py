@@ -2,35 +2,29 @@ import discord
 from discord.ext import commands
 from service.checkRank import checkrank
 from commands.thanks import HelpRequestForm 
-from discord.ui import Button, View, TextInput, Modal
+from discord.ui import TextInput, Modal
 import re
 from sqlalchemy.orm import Session
 from database import engine
 from sqlalchemy.dialects.postgresql import insert
 from models import UserScore, LogHelper
-from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from repository.userScoreRepo import UserScoreRepository
-
-
-async def customInteraction(interaction: discord.Interaction):
-    if interaction.type == discord.InteractionType.component:
-        custom_id = interaction.data.get('custom_id')
 
 async def customInteraction(interaction: discord.Interaction):
     if interaction.type == discord.InteractionType.component:
         custom_id = interaction.data.get('custom_id', '')
         
-        # Check if the custom_id matches the done button pattern
+     
         if custom_id and custom_id.startswith('done_button_'):
             requester_id = int(custom_id.split('_')[-1])
             
-            # Get the original message to access the view data
+        
             message = interaction.message
             if not message:
                 return
 
-            # Check if the interaction user is the requester
+      
             if interaction.user.id != requester_id:
                 await interaction.response.send_message(
                     "Biar yang minta bantuan yang klik!", 
@@ -38,7 +32,7 @@ async def customInteraction(interaction: discord.Interaction):
                 )
                 return
 
-            # Create new view with disabled buttons
+      
             view = discord.ui.View()
             for component in message.components:
                 for child in component.children:
@@ -50,20 +44,19 @@ async def customInteraction(interaction: discord.Interaction):
                     )
                     view.add_item(button)
 
-            # Update message with disabled buttons
+     
             await message.edit(view=view)
 
-            # Extract helper IDs and create completion embed
             helper_ids = []
             
             original_message = None
             if message.embeds:
                 embed = message.embeds[0]
-                # Extract original message
+            
                 description = embed.description
                 if description:
                     original_message = description.split('**`')[1].split('`**')[0]
-                # Extract helper IDs
+            
                 for field in embed.fields:
                     if "Sepuh yang bersedia" in field.name:
                         mentions = re.findall(r'<@(\d+)>', field.value)
