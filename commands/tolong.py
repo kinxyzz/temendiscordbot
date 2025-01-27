@@ -1,8 +1,11 @@
 import discord  # type: ignore
 from discord.ui import View  # type: ignore
-
 from discord.ui import View, Button
 from discord import app_commands, Interaction, Embed, Color,ButtonStyle
+from datetime import datetime, timedelta
+from database import Session
+from models import LogHelper
+
 
 class HelpRequestView(View):
     def __init__(
@@ -13,6 +16,14 @@ class HelpRequestView(View):
         self.message = message
         self.max_helpers = max_helpers
         self.users_helping = []
+    
+
+        done_button = discord.ui.Button(
+            label="Done", 
+            style=discord.ButtonStyle.green, 
+            custom_id=f"done_button_{self.requester.id}"
+        )
+        self.add_item(done_button)
 
     def update_message_embed(self):
         embed = discord.Embed(
@@ -42,7 +53,7 @@ class HelpRequestView(View):
         helper_text = "\n".join(helper_list) or "Belum ada yang membantu."
 
         embed.add_field(name=helper_count_text, value=helper_text, inline=False)
-        embed.set_footer( text="Temen Assistant",  icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8a")
+        embed.set_footer(text="Temen Assistant", icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8a")
         embed.set_author(name=self.requester.name, icon_url=self.requester.avatar.url)
 
         return embed
@@ -108,41 +119,6 @@ class HelpRequestView(View):
                 "Kamu tidak terdaftar dalam daftar bantuan.", ephemeral=True
             )
 
-
-    @discord.ui.button(
-        label="Done", style=discord.ButtonStyle.green, custom_id="done_button"
-    )
-    async def done_button(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        if interaction.user != self.requester:
-            await interaction.response.send_message(
-                "Biar yang minta bantuan yang klik!", ephemeral=True
-            )
-            return
-
-        helper_ids = self.users_helping.copy()
-        orang_baik_list = "\n".join([f"<@{uid}>" for uid in helper_ids])
-
-        embed = discord.Embed(
-            title="Bantuan Selesai ✅",
-            description=(
-                f"{self.requester.mention}\ntelah menyelesaikan:\n"
-                f"**`{self.message}`**\n\n"
-                f"**Bersama:**\n{orang_baik_list}\n\n"
-                "Terima kasih, Puh! 🙏"
-            ),
-            color=discord.Color.from_rgb(44, 47, 51)
-        )
-
-        try:
-            embed.set_footer( text="Temen Assistant",  icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8a")
-            await interaction.response.send_message(embed=embed)
-            await interaction.message.delete()
-        except discord.HTTPException as e:
-            print(f"Failed to update message: {e}")
-
-
     def disable_buttons(self):
         for item in self.children:
             item.disabled = True
@@ -150,13 +126,47 @@ class HelpRequestView(View):
 
 @app_commands.command(name="tolong", description="Meminta bantuan dengan opsi maxhelper.")
 async def tolong(interaction: Interaction, message: str, maxhelper: int = None):
-    if maxhelper is not None and maxhelper < 1:
-        await interaction.response.send_message(
-            "Jumlah maksimum helper harus lebih dari 0.", ephemeral=True
-        )
-        return
-
+    if maxhelper is not None:
+        if maxhelper < 1:
+            await interaction.response.send_message(
+                "Jumlah maksimum helper harus lebih dari 0.", ephemeral=True
+            )
+            return
+        elif maxhelper > 20:
+            await interaction.response.send_message(
+                "Jumlah maksimum helper tidak boleh lebih dari 20.", ephemeral=True
+            )
+            return
+    
     requester = interaction.user
+    print(requester)
+    with Session() as session:
+        print(requester.id)
+        user_id_to_filter = str(requester.id)
+        latest_log = (
+            session.query(LogHelper)
+            .filter(LogHelper.userId == user_id_to_filter) 
+            .order_by(LogHelper.timestamp.desc())
+            .first()
+        )
+
+        if latest_log:
+            print(latest_log.timestamp)
+            current_time = datetime.now()
+            time_difference = current_time - latest_log.timestamp
+            print(current_time)
+            print(time_difference)
+
+            if time_difference < timedelta(hours=1):
+                # Hitung sisa waktu dalam menit
+                remaining_time = timedelta(hours=1) - time_difference
+                remaining_minutes = int(remaining_time.total_seconds() // 60)
+                await interaction.response.send_message(
+                    f"Maaf, Anda bisa meminta bantuan lagi setelah {remaining_minutes} menit.",
+                    ephemeral=True,
+                )
+                return
+
     embed = discord.Embed(
         title="Permintaan Bantuan",
         description=f"{requester.mention} meminta bantuan untuk:\n**`{message}`**",
@@ -166,12 +176,13 @@ async def tolong(interaction: Interaction, message: str, maxhelper: int = None):
     if maxhelper:
         embed.add_field(name="Jumlah Maksimum Helper", value=f"{maxhelper} orang", inline=False)
 
-    embed.set_footer( text="Temen Assistant",  icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8a")
+    embed.set_footer(text="Temen Assistant", 
+                     icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8a")
     embed.set_author(name=requester.name, icon_url=requester.avatar.url)
 
-    view = HelpRequestView(requester, message, maxhelper)
+    view = HelpRequestView( requester, message, maxhelper)
 
     try:
-        await interaction.response.send_message(embed=embed, view=view)
+        message = await interaction.response.send_message(embed=embed, view=view)
     except discord.HTTPException as e:
         print(f"Failed to send message: {e}")

@@ -5,7 +5,6 @@ from models import UserScore
 @app_commands.command(name="rankhelper", description="Get Information About Helper Ranking")
 async def rankhelper(interaction: Interaction):
     try:
-        # Menggunakan context manager untuk sesi
         with Session() as session:
             top_users = (
                 session.query(UserScore)
@@ -18,8 +17,9 @@ async def rankhelper(interaction: Interaction):
 
         if top_users:
             for i, user_score in enumerate(top_users, 1):
+                member = interaction.guild.get_member(int(user_score.userId)).nick.split("|")[1].strip() or interaction.guild.get_member(int(user_score.userId)).name
                 embed.add_field(
-                    name=f"#{i} <@{user_score.userId}>",
+                    name=f"#{i} {member}",
                     value=f"Score: {user_score.score}",
                     inline=False,
                 )

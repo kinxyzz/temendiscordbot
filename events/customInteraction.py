@@ -3,12 +3,139 @@ from discord.ext import commands
 from service.checkRank import checkrank
 from commands.thanks import HelpRequestForm 
 from discord.ui import Button, View, TextInput, Modal
+import re
+from sqlalchemy.orm import Session
+from database import engine
+from sqlalchemy.dialects.postgresql import insert
+from models import UserScore, LogHelper
+from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime
+from repository.userScoreRepo import UserScoreRepository
+
 
 async def customInteraction(interaction: discord.Interaction):
     if interaction.type == discord.InteractionType.component:
         custom_id = interaction.data.get('custom_id')
+
+async def customInteraction(interaction: discord.Interaction):
+    if interaction.type == discord.InteractionType.component:
+        custom_id = interaction.data.get('custom_id', '')
         
-        if custom_id == "request_help_button":
+        # Check if the custom_id matches the done button pattern
+        if custom_id and custom_id.startswith('done_button_'):
+            requester_id = int(custom_id.split('_')[-1])
+            
+            # Get the original message to access the view data
+            message = interaction.message
+            if not message:
+                return
+
+            # Check if the interaction user is the requester
+            if interaction.user.id != requester_id:
+                await interaction.response.send_message(
+                    "Biar yang minta bantuan yang klik!", 
+                    ephemeral=True
+                )
+                return
+
+            # Create new view with disabled buttons
+            view = discord.ui.View()
+            for component in message.components:
+                for child in component.children:
+                    button = discord.ui.Button(
+                        style=child.style,
+                        label=child.label,
+                        custom_id=child.custom_id,
+                        disabled=True
+                    )
+                    view.add_item(button)
+
+            # Update message with disabled buttons
+            await message.edit(view=view)
+
+            # Extract helper IDs and create completion embed
+            helper_ids = []
+            
+            original_message = None
+            if message.embeds:
+                embed = message.embeds[0]
+                # Extract original message
+                description = embed.description
+                if description:
+                    original_message = description.split('**`')[1].split('`**')[0]
+                # Extract helper IDs
+                for field in embed.fields:
+                    if "Sepuh yang bersedia" in field.name:
+                        mentions = re.findall(r'<@(\d+)>', field.value)
+                        helper_ids = [int(uid) for uid in mentions]
+                        break
+
+            orang_baik_list = "\n".join([f"<@{uid}> +10" for uid in helper_ids])
+
+            if(helper_ids == []):
+                await interaction.response.send_message(
+                    "Sepuh yang bersedia masih kosong!", 
+                  
+                )
+                await message.delete()
+                return
+
+            embed = discord.Embed(
+                title="Bantuan Selesai ✅",
+                description=(
+                    f"<@{requester_id}>\ntelah menyelesaikan:\n"
+                    f"**`{original_message}`**\n\n"
+                    f"**Bersama:**\n{orang_baik_list}\n\n"
+                    "Terima kasih, Puh! 🙏"
+                ),
+                color=discord.Color.from_rgb(44, 47, 51)
+            )
+            
+            embed.set_footer(
+                text="Temen Assistant",
+                icon_url="https://cdn.discordapp.com/attachments/1226361685317783625/1325452313258758185/temen.png?ex=677bd729&is=677a85a9&hm=4a3f5affb1a1d7d1945f2c257ebc1c75f0721e340002a98fce17f8a"
+            )
+            
+            try:
+                if helper_ids:
+                    with Session(engine) as session:
+                        userScoreRepo = UserScoreRepository(session)
+                        user_score_data = [
+                            {
+                                "id": uid,
+                                "userId": uid,
+                                "score": 10,
+                                "nickname": interaction.guild.get_member(int(uid)).nick.split("|")[1].strip(),
+                                "ultra_score": 0
+                            }
+                            for uid in helper_ids
+                        ]
+                        userScoreRepo.insert_or_update_user_scores(user_score_data)
+               
+                            
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        unique_id = f"{requester_id}_{timestamp}"
+
+                        log_helper_data = ({
+                            "id": unique_id,
+                            "userId": requester_id,
+                            "timestamp": datetime.now()
+                        })
+                        
+                        stmt_log_helper = insert(LogHelper).values(log_helper_data)
+                        session.execute(stmt_log_helper)
+
+                     
+                        session.commit()
+                    log_channel = interaction.guild.get_channel(1324023927902830642)
+                    if log_channel:
+                        await log_channel.send(embed=embed)
+                await interaction.response.send_message(embed=embed)
+                await message.delete()
+            except discord.HTTPException as e:
+                print(f"Failed to update message: {e}")
+        
+        elif custom_id == "request_help_button":
             await interaction.response.send_modal(HelpRequestForm())
         
         elif custom_id == "be_helper_button":
