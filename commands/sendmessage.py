@@ -7,14 +7,23 @@ from typing import List
 @app_commands.describe(
     message="Pesan yang akan dikirim",
     category="Pilih category channel",
-    channel_id="Pilih channel untuk mengirim pesan"
+    channel_id="Pilih channel untuk mengirim pesan",
+    embed="Pilih opsi embed"
+)
+@app_commands.choices(
+    embed=[
+        app_commands.Choice(name="Ya", value=1),
+        app_commands.Choice(name="Tidak", value=0)
+    ]
 )
 async def sendmessage(
     interaction: discord.Interaction,
     message: str,
     category: discord.CategoryChannel,
-    channel_id: str
+    channel_id: str,
+    embed: int = 0
 ):
+    is_embed = bool(embed)
     try:
         channel = interaction.guild.get_channel(int(channel_id))
         if not channel:
@@ -31,7 +40,11 @@ async def sendmessage(
             )
             return
 
-        await channel.send(message)
+        if is_embed:
+            await interaction.channel.send(embed=discord.Embed(description=message))
+        else:
+            await interaction.channel.send(message)
+
         await interaction.response.send_message(
             f"Pesan berhasil dikirim ke channel {channel.mention}!",
             ephemeral=True

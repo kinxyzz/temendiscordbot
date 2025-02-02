@@ -173,6 +173,20 @@ async def customInteraction(interaction: discord.Interaction):
                     ephemeral=True,
                 )
 
+        elif custom_id.startswith("set_role_"):
+            role_name = custom_id.replace("set_role_", "")
+            role = discord.utils.get(interaction.guild.roles, name=role_name.replace("_", " "))
+            
+            if role:
+                if role in interaction.user.roles:
+                    await interaction.user.remove_roles(role)
+                    await interaction.response.send_message(f"Role {role.name} telah dihapus!", ephemeral=True)
+                else:
+                    await interaction.user.add_roles(role)
+                    await interaction.response.send_message(f"Role {role.name} telah ditambahkan!", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"Role {role_name} tidak ditemukan!", ephemeral=True)
+        
         elif custom_id == "temen_verification":
               try:
                   await interaction.response.send_modal(VerificationForm())
@@ -181,6 +195,28 @@ async def customInteraction(interaction: discord.Interaction):
                       f"Terjadi kesalahan saat menjalankan command: {e}",
                       ephemeral=True,
                   )
+
+
+# async def on_ready_event(bot: commands.Bot):
+#     try:
+#         channel = await bot.fetch_channel(1333459281877401670)
+#         message = await channel.fetch_message(1335681579099488310)
+        
+#         view = discord.ui.View(timeout=None)
+        
+    
+#         view.add_item(discord.ui.Button(label="Maniak Ultra", emoji="<:sword:1322665752544804954>", custom_id="set_role_Maniak_Ultra"))
+#         view.add_item(discord.ui.Button(label="Atlet Set", emoji="<:armor:1322636616279523410>", custom_id="set_role_Atlet_Set",))
+#         view.add_item(discord.ui.Button(label="Preman PVP", emoji="<:sigma:1296717173804498975>", custom_id="set_role_Preman_PVP"))
+#         view.add_item(discord.ui.Button(label="Petani Ulung", emoji="<:deathnote:1304352853019852841>", custom_id="set_role_Petani_Ulung"))
+        
+#         await message.edit(view=view)
+#         bot.add_view(view)
+#         print("Button roles telah siap!")
+#         await bot.tree.sync()
+        
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
 
 
 async def on_ready_event(bot : commands.Bot):
